@@ -1,6 +1,6 @@
 import pygame
 import numpy as np
-from AppWidgets.Colors import GREEN
+from AppWidgets.Colors import GREEN, BLACK
 from AppWidgets.Button import Button
 
 def getPointsFromFile():
@@ -34,7 +34,21 @@ def createButtons():
     rrt_button = Button(image=option_rect, pos=(450, 330), text_input="RRT", font=font,
                         base_color="#d7fcd4", hovering_color="White")
 
-    return [voronoi_button, rrt_button]
+    return { "voronoi" : voronoi_button, "rrt" : rrt_button}
+
+def simulationLoop():
+    run = True
+    while run:
+        pygame.display.update()
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                run = False
+                pygame.event.clear()
+                pygame.event.wait()
+            if event.type == pygame.KEYDOWN:
+                if event.key == ord ( "m" ):
+                    run = False
+
 
 def main():
     pygame.init()
@@ -49,21 +63,29 @@ def main():
     menu_rect = menu_text.get_rect(center=(450, 60))
     buttons = createButtons()
 
+
     while True:
         screen.blit(back_ground, (0,0))
         screen.blit(menu_text, menu_rect)
 
         menu_mouse_pos = pygame.mouse.get_pos()
 
-        for button in buttons:
+        for _, button in buttons.items():
             button.changeColor(menu_mouse_pos)
             button.update(screen)
 
-        # drawObstacles(obstacleList, screen)
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
                 exit()
+
+            if event.type == pygame.MOUSEBUTTONDOWN:
+
+                if buttons["voronoi"].checkForInput(menu_mouse_pos):
+                    screen.fill(BLACK)
+                    drawObstacles(obstacleList, screen)
+                    simulationLoop()
+
 
             pygame.display.update()
 
