@@ -1,7 +1,8 @@
 import pygame
 import numpy as np
-from AppWidgets.Colors import GREEN, BLACK
+from AppWidgets.Colors import GREEN, BLACK, RED
 from AppWidgets.Button import Button
+from PathCreateAlgorithms.Voronoi import VornoiPathFinder
 
 def getPointsFromFile():
     points = np.genfromtxt('assets/maze.txt', delimiter=',', dtype=np.int32)
@@ -23,6 +24,11 @@ def drawObstacles(obstacleList, window):
     for rect in obstacleList:
         pygame.draw.rect(window,GREEN,rect)
 
+def drawPathPoints(points, window, radius=5):
+    for x, y in points:
+        pygame.draw.circle(window, RED, (x,y), radius)
+
+
 def get_font(size):
     return pygame.font.Font("assets/LeagueSpartan-Bold.otf", size)
 
@@ -42,9 +48,8 @@ def simulationLoop():
         pygame.display.update()
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                run = False
-                pygame.event.clear()
-                pygame.event.wait()
+                pygame.quit()
+                exit()
             if event.type == pygame.KEYDOWN:
                 if event.key == ord ( "m" ):
                     run = False
@@ -52,7 +57,7 @@ def simulationLoop():
 
 def main():
     pygame.init()
-    points, _, _ = getPointsFromFile()
+    points, start, end = getPointsFromFile()
     windowSize = (900,600)
     screen = pygame.display.set_mode(windowSize)
     obstacleList = createObstacleList(points)
@@ -62,7 +67,6 @@ def main():
     menu_text = get_font(55).render("Wybór algorytmu", True, "#b68f40")
     menu_rect = menu_text.get_rect(center=(450, 60))
     buttons = createButtons()
-
 
     while True:
         screen.blit(back_ground, (0,0))
@@ -83,6 +87,9 @@ def main():
 
                 if buttons["voronoi"].checkForInput(menu_mouse_pos):
                     screen.fill(BLACK)
+                    voronoi = VornoiPathFinder(start, end, points)
+                    path = voronoi.findVoronoiPath()
+                    drawPathPoints(path, screen)
                     drawObstacles(obstacleList, screen)
                     simulationLoop()
 
