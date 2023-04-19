@@ -86,6 +86,10 @@ def main():
                     drawObstacles(obstacleList, screen)
                     simulationLoop()
 
+                if buttons["rrt"].checkForInput(menu_mouse_pos):
+                    screen.fill(BLACK)
+                    drawObstacles(obstacleList, screen)
+                    simulationLoop()
 
             pygame.display.update()
 
