@@ -3,9 +3,10 @@ import numpy as np
 from AppWidgets.Colors import GREEN, BLACK, RED
 from AppWidgets.Button import Button
 from PathCreateAlgorithms.Voronoi import VornoiPathFinder
+import PathCreateAlgorithms.rrt as RRT
 
 def getPointsFromFile():
-    points = np.genfromtxt('assets/maze.txt', delimiter=',', dtype=np.int32)
+    points = np.genfromtxt('MazeSolver/assets/maze.txt', delimiter=',', dtype=np.int32)
 
     start = points[0]
     end = points[1]
@@ -30,10 +31,10 @@ def drawPathPoints(points, window, radius=5):
 
 
 def get_font(size):
-    return pygame.font.Font("assets/LeagueSpartan-Bold.otf", size)
+    return pygame.font.Font("MazeSolver/assets/LeagueSpartan-Bold.otf", size)
 
 def createButtons():
-    option_rect = pygame.image.load("assets/Options Rect.png")
+    option_rect = pygame.image.load("MazeSolver/assets/Options Rect.png")
     font = get_font(60)
     voronoi_button = Button(image=option_rect, pos=(450, 200), text_input="Voronoi", font=font,
                              base_color="#d7fcd4", hovering_color="White")
@@ -63,7 +64,7 @@ def main():
     obstacleList = createObstacleList(points)
     pygame.display.set_caption("Menu")
 
-    back_ground = pygame.image.load("assets/Background.png")
+    back_ground = pygame.image.load("MazeSolver/assets/Background.png")
     menu_text = get_font(55).render("Wybór algorytmu", True, "#b68f40")
     menu_rect = menu_text.get_rect(center=(450, 60))
     buttons = createButtons()
@@ -96,6 +97,8 @@ def main():
                 if buttons["rrt"].checkForInput(menu_mouse_pos):
                     screen.fill(BLACK)
                     drawObstacles(obstacleList, screen)
+                    rrt = RRT.RRT(windowSize, start, end,obstacleList, points,screen)
+                    path = RRT.findRRTPath(rrt)
                     simulationLoop()
 
             pygame.display.update()

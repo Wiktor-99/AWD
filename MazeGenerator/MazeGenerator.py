@@ -65,7 +65,7 @@ def draw_grid(win, rows, columns, width, height):
     for i in range(rows):
         pygame.draw.line(win, GREY, (0, i * gap), (width, i * gap))
         for j in range(columns):
-            pygame.draw.line(win, GREY, (j * gap, 0), (j * gap, HEIGHT))
+            pygame.draw.line(win, GREY, (j * gap, 0), (j * gap, height))
 
 
 def draw(win, grid, rows, columns, width, height):
