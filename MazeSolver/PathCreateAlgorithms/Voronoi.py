@@ -10,8 +10,8 @@ class VornoiPathFinder:
         self.endX = end[0]
         self.endY = end[1]
         self.points = points
-        self.robotRadius = 10
-        self.obstacleRadius = 10
+        self.robotRadius = round(10 * 2**(0.5))
+        self.obstacleRadius = 30
 
     def isCollision(self, startX, startY, endX, endY,obstacle_kd_tree, edge_length=50):
         x =  startX
@@ -89,22 +89,10 @@ class VornoiPathFinder:
     def findVoronoiPath(self):
         obstacle_tree = cKDTree(np.array(self.points))
         sample_x, sample_y, _ = self.voronoiSampling()
-        is_first = True
-        path = []
-        for edge_len in [150, 160, 170, 180, 190, 200, 250]:
-            temp_path = []
-            map_info = self.generateRoadMapInfo(sample_x, sample_y, obstacle_tree, edge_len)
+        edge_length = 120
+        map_info = self.generateRoadMapInfo(sample_x, sample_y, obstacle_tree, edge_length)
 
-            rx, ry = DijkstraAlgorithm().search(
-                self.startX, self.startY, self.endX, self.endY, sample_x, sample_y, map_info)
-            temp_path = list(zip(rx, ry))
-            print(f'Length of path {self.countPathLength(path)}, edge length {edge_len}')
+        rx, ry = DijkstraAlgorithm().search(
+            self.startX, self.startY, self.endX, self.endY, sample_x, sample_y, map_info)
 
-            if len(temp_path) > 1:
-                if is_first:
-                    is_first = False
-                    path = temp_path
-                if self.countPathLength(temp_path) < self.countPathLength(path):
-                    path = list(zip(rx, ry))
-        print(f'Length of best path {self.countPathLength(path)}, edge length {edge_len}')
-        return path
+        return list(zip(rx, ry))
