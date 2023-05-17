@@ -1,13 +1,8 @@
-from ast import Str
-from re import M
 import numpy as np
 import math
 import random
 import pygame
 import colorspy as color
-from scipy.spatial import cKDTree
-import sys
-import time as _time
 
 
 RED = color.red
@@ -23,59 +18,60 @@ TURQUOISE = color.turquoise
 
 class RRT:
     def __init__(self,windowSize, startPos, endPos, obstaclesList, points, window) -> None:
-        self.windowSize_ = windowSize
-        self.winWidth_ = windowSize[0]
-        self.winHight_ = windowSize[1]
-        self.startPos_ = startPos
-        self.endPos_ = endPos
-        self.isFinished_ = False
-        self.graphPoints_ = []
-        self.parents_ = []
-        self.finalPosition_ = None
-        self.path_ = []
-        self.graphPoints_.append(self.startPos_)
-        self.parents_.append(0)
+        self.windowSize = windowSize
+        self.winWidth = windowSize[0]
+        self.winHight = windowSize[1]
+        self.startPos = startPos
+        self.endPos = endPos
+        self.isFinished = False
+        self.graphPoints = []
+        self.parents = []
+        self.finalPosition = None
+        self.path = []
+        self.graphPoints.append(self.startPos)
+        self.parents.append(0)
         self.points = points
-        self.WINDOW_ = window
-        self.obstaclesList_ = obstaclesList
+        self.WINDOW = window
+        self.obstaclesList = obstaclesList
 
 
-    def nodeAdd(self, id,position):
-        self.graphPoints_.insert(id,position)
+    def nodeAdd(self, id, position):
+        self.graphPoints.insert(id,position)
 
     def nodeDelete(self,id):
-        self.graphPoints_.pop(id)
+        self.graphPoints.pop(id)
 
-    def nodeDistance(self,id1,id2) -> float:
-        X = float(self.graphPoints_[id1][0] - self.graphPoints_[id2][0])
-        Y = float(self.graphPoints_[id1][1] - self.graphPoints_[id2][1])
+    def nodeDistance(self, id1, id2):
+        X = float(self.graphPoints[id1][0] - self.graphPoints[id2][0])
+        Y = float(self.graphPoints[id1][1] - self.graphPoints[id2][1])
 
         return np.sqrt(np.power(X,2)+np.power(Y,2))
 
-    def edgeAdd(self,parentId,childId):
-        self.parents_.insert(childId,parentId)
+    def edgeAdd(self, parentId, childId):
+        self.parents.insert(childId,parentId)
 
-    def edgeRemove(self,id):
-        self.parents_.pop(id)
+    def edgeRemove(self, id):
+        self.parents.pop(id)
 
-    def randomDirectionPoint(self)->int:
-        x = int(random.uniform(0,self.winWidth_))
-        y = int(random.uniform(0,self.winHight_))
+    def randomDirectionPoint(self):
+        x = int(random.uniform(0, self.winWidth))
+        y = int(random.uniform(0, self.winHight))
 
         return x,y
 
-    def nodeCollisionDetection(self)->bool:
-        id = len(self.graphPoints_) - 1
+    def nodeCollisionDetection(self):
+        id = len(self.graphPoints) - 1
 
-        for rec in self.obstaclesList_:
-            if rec.collidepoint(self.graphPoints_[id]):
+        for rec in self.obstaclesList:
+            if rec.collidepoint(self.graphPoints[id]):
                 self.nodeDelete(id)
                 return False
 
         return True
-    def edgeCollisionDetection(self,nodeParent,nodeChild)->bool:
 
-        for rec in self.obstaclesList_:
+    def edgeCollisionDetection(self, nodeParent, nodeChild):
+
+        for rec in self.obstaclesList:
             for i in range(0,101):
                 u = i/100
                 x = nodeParent[0]*u + nodeChild[0]*(1-u)
@@ -85,8 +81,8 @@ class RRT:
                     return False
         return True
 
-    def nodeConnection(self,parentId,childId)->bool:
-        if self.edgeCollisionDetection(self.graphPoints_[parentId],self.graphPoints_[childId]):
+    def nodeConnection(self, parentId, childId):
+        if self.edgeCollisionDetection(self.graphPoints[parentId], self.graphPoints[childId]):
             self.edgeAdd(parentId,childId)
             return True
 
@@ -103,35 +99,33 @@ class RRT:
                 distanceMin = self.nodeDistance(i,nodeId)
         return nearestId
 
-    #matma ;_;
     def stepMove(self,nodeNearestId,nodeRandomId,stepSize = 8)->None:
         distance = self.nodeDistance(nodeNearestId,nodeRandomId)
 
         if distance > stepSize:
-            u = stepSize/distance
 
-            nodeNearestPosition = (self.graphPoints_[nodeNearestId][0],self.graphPoints_[nodeNearestId][1])
-            nodeRandomPosition = (self.graphPoints_[nodeRandomId][0],self.graphPoints_[nodeRandomId][1])
+            nodeNearestPosition = (self.graphPoints[nodeNearestId][0],self.graphPoints[nodeNearestId][1])
+            nodeRandomPosition = (self.graphPoints[nodeRandomId][0],self.graphPoints[nodeRandomId][1])
 
             diffX = nodeRandomPosition[0] - nodeNearestPosition[0]
             diffY = nodeRandomPosition[1] - nodeNearestPosition[1]
 
-            theta = math.atan2(diffY,diffX)
+            theta = math.atan2(diffY, diffX)
 
             nodePosition = (int(nodeNearestPosition[0] + stepSize*math.cos(theta)),
-                            int(nodeNearestPosition[1]+stepSize*math.sin(theta)))
+                            int(nodeNearestPosition[1] + stepSize*math.sin(theta)))
             self.nodeDelete(nodeRandomId)
 
-            if abs(nodePosition[0] - self.endPos_[0])<stepSize and abs(nodeNearestPosition[1] - self.endPos_[1]) <= 20:
-                self.nodeAdd(nodeRandomId,self.endPos_)
-                self.finalPosition_ = nodeRandomId
-                self.isFinished_ = True
-            
+            if abs(nodePosition[0] - self.endPos[0])<stepSize and abs(nodeNearestPosition[1] - self.endPos[1]) <= 20:
+                self.nodeAdd(nodeRandomId,self.endPos)
+                self.finalPosition = nodeRandomId
+                self.isFinished = True
+
             else:
                 self.nodeAdd(nodeRandomId,nodePosition)
 
     def moveToEndPos(self,nodeEndPosition):
-        tempId = len(self.graphPoints_)
+        tempId = len(self.graphPoints)
 
         self.nodeAdd(tempId,nodeEndPosition)
 
@@ -140,7 +134,7 @@ class RRT:
         self.nodeConnection(nearestToEndPos,tempId)
 
     def expandTree(self):
-        tempId = len(self.graphPoints_)
+        tempId = len(self.graphPoints)
 
         randomNodePosition = self.randomDirectionPoint()
         self.nodeAdd(tempId,randomNodePosition)
@@ -151,18 +145,18 @@ class RRT:
             self.nodeConnection(nearestNode,tempId)
 
     def drawFinalPath(self):
-        positionId = len(self.graphPoints_) -1
-        while positionId >0:
-            pygame.draw.circle(self.WINDOW_,RED,self.graphPoints_[positionId],2,0)
-            self.path_.append(self.graphPoints_[positionId])
+        positionId = len(self.graphPoints) -1
+        while positionId > 0:
+            pygame.draw.circle(self.WINDOW, RED, self.graphPoints[positionId], 2, 0)
+            self.path.append(self.graphPoints[positionId])
             tempPosition = positionId
-            positionId = self.parents_[positionId]
-            pygame.draw.line(self.WINDOW_,RED,self.graphPoints_[tempPosition],self.graphPoints_[positionId],2)
+            positionId = self.parents[positionId]
+            pygame.draw.line(self.WINDOW, RED, self.graphPoints[tempPosition], self.graphPoints[positionId], 2)
             pygame.display.update()
 
-        pygame.draw.circle(self.WINDOW_,RED,self.startPos_,2,0)
-        self.path_.append(self.graphPoints_[0])
-        self.path_.reverse()
+        pygame.draw.circle(self.WINDOW, RED, self.startPos, 2, 0)
+        self.path.append(self.graphPoints[0])
+        self.path.reverse()
         pygame.display.update()
 
         return True
@@ -170,21 +164,21 @@ class RRT:
 
 def findRRTPath(rrt):
     iteration = 0
-    while (rrt.isFinished_ == False):
-        if iteration % 10 == 0 and rrt.isFinished_ == False:
-            rrt.moveToEndPos(rrt.endPos_)
-            pygame.draw.circle(rrt.WINDOW_,BLUE,rrt.graphPoints_[-1],2,0)
-            pygame.draw.line(rrt.WINDOW_,PURPLE,rrt.graphPoints_[-1],rrt.graphPoints_[rrt.parents_[-1]],2)
+    while (rrt.isFinished == False):
+        if iteration % 10 == 0 and rrt.isFinished == False:
+            rrt.moveToEndPos(rrt.endPos)
+            pygame.draw.circle(rrt.WINDOW, BLUE, rrt.graphPoints[-1], 2, 0)
+            pygame.draw.line(rrt.WINDOW, PURPLE, rrt.graphPoints[-1], rrt.graphPoints[rrt.parents[-1]], 2)
             pygame.display.update()
 
         else:
             rrt.expandTree()
-            pygame.draw.circle(rrt.WINDOW_,BLUE,rrt.graphPoints_[-1],2,0)
-            pygame.draw.line(rrt.WINDOW_,PURPLE,rrt.graphPoints_[-1],rrt.graphPoints_[rrt.parents_[-1]],2)
+            pygame.draw.circle(rrt.WINDOW, BLUE, rrt.graphPoints[-1], 2, 0)
+            pygame.draw.line(rrt.WINDOW, PURPLE, rrt.graphPoints[-1], rrt.graphPoints[rrt.parents[-1]], 2)
 
         iteration+=1
     rrt.drawFinalPath()
-    path = rrt.path_
+    path = rrt.path
     return path
 
 def countPathLength(path):
@@ -196,6 +190,3 @@ def countPathLength(path):
                             2 + (path[i+1][1] - path[i][1])**2)**(1/2)
 
         return total_length
-
-
-
