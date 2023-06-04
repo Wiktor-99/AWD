@@ -47,7 +47,7 @@ def createButtons():
 
     return { "voronoi" : voronoi_button, "rrt" : rrt_button, "result" : result_button}
 
-def simulationLoop(robot, path, screen, obstacleList):
+def simulationLoop(robot, path, screen, obstacleList, end):
     run = True
     while run:
         pygame.display.update()
@@ -65,6 +65,7 @@ def simulationLoop(robot, path, screen, obstacleList):
         drawObstacles(obstacleList, screen)
         robot.moveRobot(path)
         robot.draw(screen)
+        drawCircleOnEndOfPath(screen, end)
         pygame.display.update()
 
 def countPathLength(path):
@@ -76,7 +77,7 @@ def countPathLength(path):
 
     return total_length
 
-def create_result_text(screen, results, algorithm_name, text_center=(80, 150), length_center=(340, 200), time_center=(340, 150),
+def createResultText(screen, results, algorithm_name, text_center=(80, 150), length_center=(340, 200), time_center=(340, 150),
                       time_rect_center=(600, 150), path_rect = (600, 200)):
     text = get_font(45).render(f"{algorithm_name}", True, "#d7fcd4")
     rect = text.get_rect(center=text_center)
@@ -111,12 +112,14 @@ def createResultBackButton(screen):
 
     return results_back
 
+def drawCircleOnEndOfPath(screen, end):
+    pygame.draw.circle(screen, RED, end, 20, 1)
 
 def checkResults(screen, results):
     while True:
         resultBackground(screen)
-        create_result_text(screen, results, 'rrt')
-        create_result_text(screen, results, 'voronoi', (130, 300), (340, 350), (340, 300), (600, 300), (600, 350))
+        createResultText(screen, results, 'rrt')
+        createResultText(screen, results, 'voronoi', (130, 300), (340, 350), (340, 300), (600, 300), (600, 350))
         results_back = createResultBackButton(screen)
 
         for event in pygame.event.get():
@@ -127,7 +130,6 @@ def checkResults(screen, results):
                     main()
 
         pygame.display.update()
-
 
 
 def main():
@@ -173,20 +175,21 @@ def main():
                     end_time = t.time()
                     results['voronoi_path_length'] = round(countPathLength(path), 2)
                     results['voronoi_time'] = round(end_time - start_time, 4)
-                    simulationLoop(robot, path, screen, obstacleList)
+                    simulationLoop(robot, path, screen, obstacleList, end)
 
 
                 if buttons["rrt"].checkForInput(menu_mouse_pos):
                     pygame.display.set_caption("RRT")
                     screen.fill(BLACK)
                     drawObstacles(obstacleList, screen)
+                    pygame.display.update()
                     start_time = t.time()
                     rrt = RRT.RRT(windowSize, start, end,obstacleList, points,screen)
                     path = RRT.findRRTPath(rrt)
                     end_time = t.time()
                     results['rrt_path_length'] = round(countPathLength(path), 2)
                     results['rrt_time'] = round(end_time - start_time, 4)
-                    simulationLoop(robot, path, screen, obstacleList)
+                    simulationLoop(robot, path, screen, obstacleList, end)
 
                 if buttons["result"].checkForInput(menu_mouse_pos):
                     checkResults(screen, results)
