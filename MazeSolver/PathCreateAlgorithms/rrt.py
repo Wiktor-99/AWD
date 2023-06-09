@@ -3,7 +3,7 @@ import math
 import random
 import pygame
 import colorspy as color
-
+from scipy.spatial import cKDTree
 
 RED = color.red
 GREEN = color.green
@@ -33,7 +33,28 @@ class RRT:
         self.points = points
         self.WINDOW = window
         self.obstaclesList = obstaclesList
+        self.robotRadius = round(1 * 2**(0.5))
+        self.obstSize_ = self.get_centers_of_obstacles()
+        self.setColisonData(30)
+        
 
+    def get_centers_of_obstacles(self):
+        centers = []
+        for rect in self.obstaclesList:
+            centers.append((rect.center))
+        return centers
+    
+    def setColisonData(self, obstacleSize):
+        self.pointsCol = cKDTree(np.array(self.get_centers_of_obstacles()))
+        self.obstacleSize = obstacleSize * (2)**(0.5)
+
+    def isColision(self, point):
+        dist, _ = self.pointsCol.query([point[0], point[1]])
+
+        if dist <= self.robotRadius + self.obstacleSize:
+            return True
+
+        return False
 
     def nodeAdd(self, id, position):
         self.graphPoints.insert(id,position)
@@ -99,7 +120,7 @@ class RRT:
                 distanceMin = self.nodeDistance(i,nodeId)
         return nearestId
 
-    def stepMove(self,nodeNearestId,nodeRandomId,stepSize = 8)->None:
+    def stepMove(self,nodeNearestId,nodeRandomId,stepSize = 30)->None:
         distance = self.nodeDistance(nodeNearestId,nodeRandomId)
 
         if distance > stepSize:
@@ -116,13 +137,14 @@ class RRT:
                             int(nodeNearestPosition[1] + stepSize*math.sin(theta)))
             self.nodeDelete(nodeRandomId)
 
-            if abs(nodePosition[0] - self.endPos[0])<stepSize and abs(nodeNearestPosition[1] - self.endPos[1]) <= 20:
+            if abs(nodePosition[0] - self.endPos[0])<stepSize and abs(nodeNearestPosition[1] - self.endPos[1]) <= 50:
                 self.nodeAdd(nodeRandomId,self.endPos)
                 self.finalPosition = nodeRandomId
                 self.isFinished = True
 
             else:
-                self.nodeAdd(nodeRandomId,nodePosition)
+                if not self.isColision(nodePosition):
+                    self.nodeAdd(nodeRandomId,nodePosition)
 
     def moveToEndPos(self,nodeEndPosition):
         tempId = len(self.graphPoints)
@@ -131,18 +153,22 @@ class RRT:
 
         nearestToEndPos = self.measureNodeDistance(tempId)
         self.stepMove(nearestToEndPos,tempId)
-        self.nodeConnection(nearestToEndPos,tempId)
+        if nearestToEndPos < len(self.graphPoints) and tempId < len(self.graphPoints):
+            self.nodeConnection(nearestToEndPos,tempId)
+            #self.nodeConnection(nearestToEndPos,tempId)
 
     def expandTree(self):
         tempId = len(self.graphPoints)
 
         randomNodePosition = self.randomDirectionPoint()
-        self.nodeAdd(tempId,randomNodePosition)
+        if not self.isColision(randomNodePosition):
+            self.nodeAdd(tempId,randomNodePosition)
 
-        if self.nodeCollisionDetection():
-            nearestNode = self.measureNodeDistance(tempId)
-            self.stepMove(nearestNode,tempId)
-            self.nodeConnection(nearestNode,tempId)
+            if self.nodeCollisionDetection():
+                nearestNode = self.measureNodeDistance(tempId)
+                self.stepMove(nearestNode,tempId)
+                if nearestNode < len(self.graphPoints) and tempId < len(self.graphPoints):
+                    self.nodeConnection(nearestNode,tempId)
 
     def drawFinalPath(self):
         positionId = len(self.graphPoints) -1
